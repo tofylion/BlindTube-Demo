@@ -8,7 +8,7 @@ int appleId = Server.addCreator(
   subscribers: 15600000,
 );
 Creator appleCreator = Server.getCreatorById(appleId);
-Video appleWorkHome = Video(
+Video appleAtWorkHome = Video(
   id: 1,
   videoPath: 'assets/videos/apple-at-work.mp4',
   publishDateTime: DateTime(2019, 4, 3),

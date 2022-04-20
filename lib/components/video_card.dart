@@ -46,20 +46,20 @@ class VideoCard extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 5.0),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: maxHeight,
-              maxWidth: maxWidth,
-            ),
-            child: Material(
-              elevation: elevation,
-              clipBehavior: Clip.antiAlias,
-              borderRadius: thumbnailBorderRadius,
-              child: ClipRRect(
+          child: Hero(
+            transitionOnUserGestures: true,
+            tag: 'video' + nonFinalHeroIndex.toString(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: maxHeight,
+                maxWidth: maxWidth,
+              ),
+              child: Material(
+                elevation: elevation,
+                clipBehavior: Clip.antiAlias,
                 borderRadius: thumbnailBorderRadius,
-                child: Hero(
-                  transitionOnUserGestures: true,
-                  tag: 'video' + nonFinalHeroIndex.toString(),
+                child: ClipRRect(
+                  borderRadius: thumbnailBorderRadius,
                   child: Image(
                     image: ResizeImage(
                       Image.asset(

@@ -2,6 +2,7 @@ import 'package:blindtube/components/tappable.dart';
 import 'package:blindtube/components/creator_card.dart';
 import 'package:blindtube/components/video_card.dart';
 import 'package:blindtube/hero_control.dart';
+import 'package:blindtube/pages/creator_page.dart';
 import 'package:blindtube/pages/video_list_page.dart';
 import 'package:blindtube/pages/video_page.dart';
 import 'package:blindtube/structure/creator.dart';
@@ -17,15 +18,6 @@ import 'package:auto_size_text/auto_size_text.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
-
-  Future<Widget> buildPageAsync(Video video, int heroIndex) async {
-    return Future.microtask(() {
-      return VideoPage(
-        video: video,
-        heroIndex: heroIndex,
-      );
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +107,7 @@ class HomePage extends StatelessWidget {
                     children: [
                       CarouselTopBar(barName: 'Continue Watching'),
                       SizedBox(
-                        height: 320,
+                        height: 350,
                         child: InfiniteCarousel.builder(
                           itemCount: 5,
                           itemExtent: 320,
@@ -126,9 +118,11 @@ class HomePage extends StatelessWidget {
                             int heroIndex = HeroControl.generateHeroIndex();
                             return Tappable(
                               onTap: () async {
-                                var page = await buildPageAsync(
-                                  appleWorkHome,
-                                  heroIndex,
+                                var page = await HeroControl.buildPageAsync(
+                                  VideoPage(
+                                    video: appleAtWorkHome,
+                                    heroIndex: heroIndex,
+                                  ),
                                 );
                                 var route =
                                     MaterialPageRoute(builder: (_) => page);
@@ -136,7 +130,7 @@ class HomePage extends StatelessWidget {
                                 Navigator.push(context, route);
                               },
                               child: VideoCard(
-                                video: appleWorkHome,
+                                video: appleAtWorkHome,
                                 heroIndex: heroIndex,
                               ),
                             );
@@ -154,7 +148,7 @@ class HomePage extends StatelessWidget {
                     children: [
                       CarouselTopBar(barName: 'Recommened'),
                       SizedBox(
-                        height: 320,
+                        height: 350,
                         child: InfiniteCarousel.builder(
                           itemCount: 5,
                           itemExtent: 320,
@@ -166,17 +160,18 @@ class HomePage extends StatelessWidget {
                             int heroIndex = HeroControl.generateHeroIndex();
                             return Tappable(
                               onTap: () async {
-                                var page = await buildPageAsync(
-                                  appleWorkHome,
-                                  heroIndex,
-                                );
+                                var page =
+                                    await HeroControl.buildPageAsync(VideoPage(
+                                  video: appleAtWorkHome,
+                                  heroIndex: heroIndex,
+                                ));
                                 var route =
                                     MaterialPageRoute(builder: (_) => page);
 
                                 Navigator.push(context, route);
                               },
                               child: VideoCard(
-                                video: appleWorkHome,
+                                video: appleAtWorkHome,
                                 heroIndex: heroIndex,
                               ),
                             );
@@ -218,18 +213,33 @@ class HomePage extends StatelessWidget {
                           vertical: 10,
                         ),
                         child: SizedBox(
-                          height: 160,
+                          height: 180,
                           child: InfiniteCarousel.builder(
                             itemCount: 5,
-                            itemExtent: 115,
+                            itemExtent: 130,
                             velocityFactor: 0.2,
                             loop: false,
                             center: false,
                             physics: const BouncingScrollPhysics(),
                             axisDirection: Axis.horizontal,
                             itemBuilder: (context, itemIndex, realIndex) {
-                              return CreatorCard(
-                                creator: appleCreator,
+                              int heroIndex = HeroControl.generateHeroIndex();
+                              return Tappable(
+                                child: CreatorCard(
+                                  creator: appleCreator,
+                                  heroIndex: heroIndex,
+                                ),
+                                onTap: () async {
+                                  var page = await HeroControl.buildPageAsync(
+                                    CreatorPage(
+                                      creator: appleCreator,
+                                      heroIndex: heroIndex,
+                                    ),
+                                  );
+                                  var route =
+                                      MaterialPageRoute(builder: (_) => page);
+                                  Navigator.push(context, route);
+                                },
                               );
                             },
                           ),

@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:blindtube/components/comment_card.dart';
+import 'package:blindtube/components/sub_button.dart';
 import 'package:blindtube/components/tappable.dart';
 import 'package:blindtube/components/video_card.dart';
 import 'package:blindtube/hero_control.dart';
@@ -168,33 +169,33 @@ class _VideoPageState extends State<VideoPage> {
                 //   maxHeight: !vidHeight.isNaN ? vidHeight : 500,
                 // ),
                 curve: Sprung.overDamped.flipped,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  child: Material(
-                    color: Colors.transparent,
-                    elevation: videoPlayerElevation,
-                    borderRadius: videoPlayerBorderRadius,
-                    clipBehavior: Clip.hardEdge,
-                    shadowColor: videoPlayerShadow,
-                    child: Hero(
-                      transitionOnUserGestures: true,
-                      tag: 'video' + nonFinalHeroIndex.toString(),
+                child: Hero(
+                  transitionOnUserGestures: true,
+                  tag: 'video' + nonFinalHeroIndex.toString(),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onScaleUpdate: (details) {
+                      // print(details.scale);
+                      if (details.scale > 1.3) {
+                        _chewieController!.enterFullScreen();
+                      }
+                    },
+                    onVerticalDragUpdate: (details) {
+                      if (details.primaryDelta! <= -10) {
+                        _chewieController!.enterFullScreen();
+                      } else if (details.primaryDelta! >= 10) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Material(
+                      color: Colors.transparent,
+                      elevation: videoPlayerElevation,
+                      borderRadius: videoPlayerBorderRadius,
+                      clipBehavior: Clip.hardEdge,
+                      shadowColor: videoPlayerShadow,
                       child: playerWidget,
                     ),
                   ),
-                  onScaleUpdate: (details) {
-                    // print(details.scale);
-                    if (details.scale > 1.3) {
-                      _chewieController!.enterFullScreen();
-                    }
-                  },
-                  onVerticalDragUpdate: (details) {
-                    if (details.primaryDelta! <= -10) {
-                      _chewieController!.enterFullScreen();
-                    } else if (details.primaryDelta! >= 10) {
-                      Navigator.pop(context);
-                    }
-                  },
                 ),
               ),
               Expanded(
@@ -415,42 +416,18 @@ class _VideoPageState extends State<VideoPage> {
                                     ),
                                   ),
                                   Expanded(
-                                    child: Tappable(
+                                      child: Padding(
+                                    padding: const EdgeInsets.all(10.0),
+                                    child: SubButton(
+                                      subbed: subbed,
                                       onTap: () {
-                                        //TODO: handle subbing and unsubbing
                                         setState(() {
                                           subbed = !subbed;
                                         });
+                                        print(subbed);
                                       },
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(10.0),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: subbed
-                                                ? darkerBackground
-                                                : secondaryColor,
-                                            borderRadius: BorderRadius.all(
-                                              buttonBorderRadius,
-                                            ),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              'Subscribe' + (subbed ? 'd' : ''),
-                                              textAlign: TextAlign.center,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall!
-                                                  .copyWith(
-                                                    color: subbed
-                                                        ? secondaryColor
-                                                        : secondaryTextColor,
-                                                  ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
                                     ),
-                                  ),
+                                  )),
                                 ],
                               ),
                             ),
@@ -515,21 +492,19 @@ class _VideoPageState extends State<VideoPage> {
                                 vertical: 20,
                               ),
                               child: Tappable(
-                                onTap: () {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) {
-                                        return VideoPage(
-                                          video: appleWorkHome,
-                                          heroIndex: heroIndex,
-                                        );
-                                      },
-                                    ),
-                                  );
+                                onTap: () async {
+                                  var page = await HeroControl.buildPageAsync(
+                                      VideoPage(
+                                    video: appleAtWorkHome,
+                                    heroIndex: heroIndex,
+                                  ));
+                                  var route =
+                                      MaterialPageRoute(builder: (_) => page);
+
+                                  Navigator.pushReplacement(context, route);
                                 },
                                 child: VideoCard(
-                                  video: appleWorkHome,
+                                  video: appleAtWorkHome,
                                   heroIndex: heroIndex,
                                 ),
                               ),

@@ -28,86 +28,89 @@ class VideoListPage extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: CustomScrollView(
-          physics: BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 150,
-              automaticallyImplyLeading: false,
-              elevation: 0,
-              backgroundColor: darkerBackground.withOpacity(0.5),
-              // floating: true,
-              // snap: true,
-              pinned: true,
-              flexibleSpace: FlexibleSpaceBar(
-                titlePadding: EdgeInsets.zero,
-                expandedTitleScale: 1,
-                centerTitle: true,
-                title: Stack(
-                  children: [
-                    BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: blurRadius,
-                        sigmaY: blurRadius,
+        child: GestureDetector(
+          onHorizontalDragUpdate: (details) {
+            if (details.primaryDelta! >= 10) {
+              Navigator.pop(context);
+            }
+          },
+          child: CustomScrollView(
+            physics: BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 150,
+                automaticallyImplyLeading: false,
+                elevation: 0,
+                backgroundColor: darkerBackground.withOpacity(0.5),
+                // floating: true,
+                // snap: true,
+                pinned: true,
+                flexibleSpace: FlexibleSpaceBar(
+                  titlePadding: EdgeInsets.zero,
+                  expandedTitleScale: 1,
+                  centerTitle: true,
+                  title: Stack(
+                    children: [
+                      BackdropFilter(
+                        filter: ImageFilter.blur(
+                          sigmaX: blurRadius,
+                          sigmaY: blurRadius,
+                        ),
+                        child: Container(
+                          color: darkerBackground.withOpacity(0.5),
+                        ),
                       ),
-                      child: Container(
-                        color: darkerBackground.withOpacity(0.5),
+                      Center(
+                        child: Hero(
+                          transitionOnUserGestures: true,
+                          tag: nonFinalHeroIndex,
+                          child: Text(
+                            comingFrom,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                        ),
                       ),
-                    ),
-                    Center(
-                      child: Hero(
-                        transitionOnUserGestures: true,
-                        tag: nonFinalHeroIndex,
-                        child: Text(
-                          comingFrom,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineMedium,
+                    ],
+                  ),
+                ),
+              ),
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, itemCount) {
+                  int heroIndex = HeroControl.generateHeroIndex();
+                  return Column(children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 20,
+                      ),
+                      child: Tappable(
+                        onTap: () async {
+                          var page = await HeroControl.buildPageAsync(VideoPage(
+                            video: appleAtWorkHome,
+                            heroIndex: heroIndex,
+                          ));
+                          var route = MaterialPageRoute(builder: (_) => page);
+
+                          Navigator.push(context, route);
+                        },
+                        child: VideoCard(
+                          video: appleAtWorkHome,
+                          heroIndex: heroIndex,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                    Divider(
+                      indent: 50,
+                      endIndent: 50,
+                    ),
+                  ]);
+                }, childCount: 5),
               ),
-            ),
-            SliverList(
-              delegate: SliverChildBuilderDelegate((context, itemCount) {
-                int heroIndex = HeroControl.generateHeroIndex();
-                return Column(children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 20,
-                    ),
-                    child: Tappable(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return VideoPage(
-                                video: appleWorkHome,
-                                heroIndex: heroIndex,
-                              );
-                            },
-                          ),
-                        );
-                      },
-                      child: VideoCard(
-                        video: appleWorkHome,
-                        heroIndex: heroIndex,
-                      ),
-                    ),
-                  ),
-                  Divider(
-                    indent: 50,
-                    endIndent: 50,
-                  ),
-                ]);
-              }, childCount: 5),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
