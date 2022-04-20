@@ -1,0 +1,2 @@
+const defaultVidPic = '';
+const defaultCreatorPic = '';
