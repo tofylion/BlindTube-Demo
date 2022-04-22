@@ -1,10 +1,9 @@
-import 'package:blindtube/pages/creator_page.dart';
+import 'package:blindtube/engines/videoRecommender.dart';
 import 'package:blindtube/pages/home_page.dart';
-import 'package:blindtube/pages/landing.dart';
-import 'package:blindtube/pages/video_list_page.dart';
-import 'package:blindtube/pages/video_page.dart';
+import 'package:blindtube/structure/server.dart';
 import 'package:blindtube/structure/video.dart';
-import 'package:blindtube/testing/test_intialisers.dart';
+
+import 'package:blindtube/testing/database.dart';
 import 'package:flutter/material.dart';
 import '/styles/palette.dart';
 
@@ -13,12 +12,18 @@ void main() {
   runApp(const MyApp());
 }
 
+bool databaseBuilt = false;
+
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    if (!databaseBuilt) {
+      Database.populateDatabase();
+      databaseBuilt = true;
+    }
     ThemeData theme = ThemeData.dark();
 
     return MaterialApp(
@@ -106,7 +111,6 @@ class MyApp extends StatelessWidget {
         dividerColor: fadedTextColor,
       ),
       home: HomePage(),
-      routes: <String, WidgetBuilder>{},
     );
   }
 }

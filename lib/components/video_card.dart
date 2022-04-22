@@ -1,26 +1,29 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:blindtube/hero_control.dart';
+import 'package:blindtube/structure/server.dart';
 import 'package:blindtube/structure/video.dart';
 import 'package:blindtube/styles/palette.dart';
 import 'package:flutter/material.dart';
 
 class VideoCard extends StatelessWidget {
   VideoCard({
-    required this.video,
+    required int this.videoId,
     this.elevation = 2,
     this.thumbnailBorderRadius = const BorderRadius.all(Radius.circular(15)),
     this.creatorBorder,
     this.heroIndex,
   });
-  final Video video;
+  final int videoId;
   final double elevation;
   final BorderRadius thumbnailBorderRadius;
   final int? heroIndex;
   BoxBorder? creatorBorder;
 
   double maxWidth = 500;
-  double maxHeight = 300;
+  double maxHeight = 200;
   @override
   Widget build(BuildContext context) {
+    Video video = Server.getVideoById(videoId);
     creatorBorder ??= Border.all(
       color: secondaryColor,
       width: 0.5,
@@ -117,10 +120,11 @@ class VideoCard extends StatelessWidget {
                     child: Hero(
                       transitionOnUserGestures: true,
                       tag: 'title' + nonFinalHeroIndex.toString(),
-                      child: Text(
+                      child: AutoSizeText(
                         videoTitle,
                         style: Theme.of(context).textTheme.titleLarge,
                         softWrap: true,
+                        maxLines: 2,
                       ),
                     ),
                   ),

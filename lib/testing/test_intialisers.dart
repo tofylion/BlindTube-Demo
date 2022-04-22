@@ -12,7 +12,7 @@ Video appleAtWorkHome = Video(
   id: 1,
   videoPath: 'assets/videos/apple-at-work.mp4',
   publishDateTime: DateTime(2019, 4, 3),
-  length: DateTime.parse('1970-01-01 00:03:00'),
+  length: const Duration(minutes: 3),
   creator: appleCreator,
   title: 'Apple at Work — The Underdogs',
   picPath: 'assets/images/apple at work.jpg',

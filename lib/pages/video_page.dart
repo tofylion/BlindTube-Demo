@@ -5,34 +5,31 @@ import 'package:blindtube/components/comment_card.dart';
 import 'package:blindtube/components/sub_button.dart';
 import 'package:blindtube/components/tappable.dart';
 import 'package:blindtube/components/video_card.dart';
+import 'package:blindtube/engines/videoRecommender.dart';
 import 'package:blindtube/hero_control.dart';
-import 'package:blindtube/main.dart';
-import 'package:blindtube/structure/comment.dart';
+import 'package:blindtube/pages/creator_page.dart';
 import 'package:blindtube/structure/creator.dart';
 import 'package:blindtube/structure/server.dart';
 import 'package:blindtube/structure/video.dart';
 import 'package:blindtube/styles/constants.dart';
 import 'package:blindtube/styles/palette.dart';
 import 'package:blindtube/styles/videoPlayerStyle.dart';
-import 'package:blindtube/testing/test_intialisers.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:blindtube/testing/database.dart';
 import 'package:flutter/material.dart';
 import 'package:chewie/chewie.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:like_button/like_button.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
-import 'package:spring_button/spring_button.dart';
 import 'package:sprung/sprung.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPage extends StatefulWidget {
   const VideoPage({
-    required Video this.video,
+    required this.videoId,
     this.heroIndex,
   });
 
-  final Video video;
+  final int videoId;
   final int? heroIndex;
 
   @override
@@ -44,26 +41,45 @@ class _VideoPageState extends State<VideoPage> {
   late VideoPlayerController videoPlayerController;
   ChewieController? _chewieController;
 
+  late List<int> recommendedVideos;
+
   @override
   void initState() {
     super.initState();
     initialisePlayer();
+    recommendedVideos = VideoRecommender.recommendOnUser(
+      Server.videos,
+      Database.user,
+    );
   }
 
   @override
-  void dispose() {
+  void dispose() async {
     videoPlayerController.dispose();
     _chewieController?.dispose();
     super.dispose();
+    Duration checkpoint = Server.checkPointVideo(
+      Database.user,
+      Server.getVideoById(widget.videoId),
+      (await videoPlayerController.position) as Duration,
+    );
+    // super.dispose();
   }
 
   Future<void> initialisePlayer() async {
-    videoPlayerController = VideoPlayerController.asset(widget.video.videoPath);
+    Duration checkpoint = Server.resumeVideo(
+      Database.user,
+      Server.getVideoById(widget.videoId),
+    );
+
+    videoPlayerController = VideoPlayerController.asset(
+        Server.getVideoById(widget.videoId).videoPath);
 
     await Future.wait([
       videoPlayerController.initialize(),
     ]);
     _createChewieController();
+    _chewieController!.seekTo(checkpoint);
     setState(() {});
   }
 
@@ -89,11 +105,9 @@ class _VideoPageState extends State<VideoPage> {
     );
   }
 
-  bool subbed = true;
-  bool isLiked = true;
   bool descCollapsed = true;
   bool commentsShown = false;
-  PanelController _panelController = PanelController();
+  final PanelController _panelController = PanelController();
 
   int? nonFinalHeroIndex;
 
@@ -105,7 +119,10 @@ class _VideoPageState extends State<VideoPage> {
       nonFinalHeroIndex = widget.heroIndex;
     }
 
-    final Video video = widget.video;
+    final Video video = Server.getVideoById(widget.videoId);
+    bool videoLiked = Database.user.likedVideos.contains(video);
+    Creator creator = Server.getCreatorById(video.creator.id);
+    bool subbed = Database.user.subbedTo.contains(creator);
     Image placeholderImage = Image.asset(video.picPath);
     Widget playerWidget = _chewieController != null &&
             _chewieController!.videoPlayerController.value.isInitialized
@@ -120,7 +137,6 @@ class _VideoPageState extends State<VideoPage> {
 
     final String videoLength = video.getLengthAsString();
     final String desc = video.description;
-    final String tagString = video.getTagsAsCollapsedString();
     final String videoViews = video.getViewsAsString();
     final Creator videoCreator = video.creator;
     final String creatorSubs = videoCreator.getSubsAsString();
@@ -134,7 +150,7 @@ class _VideoPageState extends State<VideoPage> {
         parallaxEnabled: true,
         parallaxOffset: 0.25,
         backdropEnabled: true,
-        borderRadius: BorderRadius.vertical(
+        borderRadius: const BorderRadius.vertical(
           top: Radius.circular(10),
         ),
         maxHeight: _panelHeightOpen,
@@ -160,7 +176,7 @@ class _VideoPageState extends State<VideoPage> {
             children: [
               AnimatedContainer(
                 // clipBehavior: Clip.antiAlias,
-                duration: Duration(
+                duration: const Duration(
                   milliseconds: 1000,
                 ),
 
@@ -241,15 +257,15 @@ class _VideoPageState extends State<VideoPage> {
                                       style:
                                           Theme.of(context).textTheme.bodyLarge,
                                     ),
-                                    VerticalDivider(),
+                                    const VerticalDivider(),
                                     Text(
-                                      videoViews,
+                                      videoViews + ' views',
                                       style:
                                           Theme.of(context).textTheme.bodyLarge,
                                     ),
-                                    VerticalDivider(),
+                                    const VerticalDivider(),
                                     Text(
-                                      tagString,
+                                      video.getPublishDateAsString(),
                                       style:
                                           Theme.of(context).textTheme.bodyLarge,
                                     ),
@@ -269,10 +285,21 @@ class _VideoPageState extends State<VideoPage> {
                                       vertical: 30,
                                     ),
                                     child: CustomLikeButton(
-                                      isLiked: isLiked,
+                                      isLiked: videoLiked,
                                       onTap: (isLiked) {
-                                        this.isLiked = isLiked;
-                                        setState(() {});
+                                        setState(() {
+                                          if (videoLiked) {
+                                            Server.unlikeVideo(
+                                              Database.user,
+                                              video,
+                                            );
+                                          } else {
+                                            Server.likeVideo(
+                                              Database.user,
+                                              video,
+                                            );
+                                          }
+                                        });
                                       },
                                     ),
                                   ),
@@ -281,7 +308,7 @@ class _VideoPageState extends State<VideoPage> {
                                   child: Tappable(
                                     behavior: HitTestBehavior.deferToChild,
                                     fadeInDuration:
-                                        Duration(milliseconds: 2000),
+                                        const Duration(milliseconds: 2000),
                                     child: Container(
                                       // width: 80,
                                       height: 80,
@@ -293,7 +320,7 @@ class _VideoPageState extends State<VideoPage> {
                                           color: mainTextColor,
                                         ),
                                       ),
-                                      child: Center(
+                                      child: const Center(
                                         child: Icon(
                                           Icons.message,
                                           color: mainTextColor,
@@ -313,7 +340,7 @@ class _VideoPageState extends State<VideoPage> {
                             ),
                           ),
                           Padding(
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                               horizontal: 10,
                               vertical: 10,
                             ),
@@ -345,74 +372,90 @@ class _VideoPageState extends State<VideoPage> {
                                 children: [
                                   Expanded(
                                     flex: 2,
-                                    child: Row(
-                                      children: [
-                                        Hero(
-                                          transitionOnUserGestures: true,
-                                          tag: 'creatorPic' +
-                                              nonFinalHeroIndex.toString(),
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                color: secondaryColor,
-                                                width: 0.5,
-                                              ),
-                                              shape: BoxShape.circle,
-                                              color: cardColor,
-                                            ),
-                                            child: ClipOval(
-                                              child: Image(
-                                                image: ResizeImage(
-                                                  Image.asset(
-                                                    videoCreator.picPath,
-                                                    // width: 60,
-                                                    isAntiAlias: true,
-                                                  ).image,
-                                                  width: 135,
-                                                  allowUpscaling: true,
+                                    child: Tappable(
+                                      onTap: () {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return CreatorPage(
+                                                creatorId: creator.id,
+                                                heroIndex: nonFinalHeroIndex,
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      child: Row(
+                                        children: [
+                                          Hero(
+                                            transitionOnUserGestures: true,
+                                            tag: 'creatorPic' +
+                                                nonFinalHeroIndex.toString(),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                  color: secondaryColor,
+                                                  width: 0.5,
                                                 ),
-                                                width: 60,
+                                                shape: BoxShape.circle,
+                                                color: cardColor,
+                                              ),
+                                              child: ClipOval(
+                                                child: Image(
+                                                  image: ResizeImage(
+                                                    Image.asset(
+                                                      videoCreator.picPath,
+                                                      // width: 60,
+                                                      isAntiAlias: true,
+                                                    ).image,
+                                                    width: 135,
+                                                    allowUpscaling: true,
+                                                  ),
+                                                  width: 60,
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 15),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                  vertical: 5,
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 15),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    vertical: 5,
+                                                  ),
+                                                  child: Text(
+                                                    videoCreator.name,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleMedium,
+                                                  ),
                                                 ),
-                                                child: Text(
-                                                  videoCreator.name,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleMedium,
+                                                Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    vertical: 5,
+                                                  ),
+                                                  child: Text(
+                                                    creatorSubs +
+                                                        ' subscribers',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleSmall,
+                                                  ),
                                                 ),
-                                              ),
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                  vertical: 5,
-                                                ),
-                                                child: Text(
-                                                  creatorSubs + ' subscribers',
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleSmall,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      ],
+                                              ],
+                                            ),
+                                          )
+                                        ],
+                                      ),
                                     ),
                                   ),
                                   Expanded(
@@ -422,9 +465,18 @@ class _VideoPageState extends State<VideoPage> {
                                       subbed: subbed,
                                       onTap: () {
                                         setState(() {
-                                          subbed = !subbed;
+                                          if (subbed) {
+                                            Server.unSubFromCreator(
+                                              Database.user,
+                                              creator,
+                                            );
+                                          } else {
+                                            Server.subToCreator(
+                                              Database.user,
+                                              creator,
+                                            );
+                                          }
                                         });
-                                        print(subbed);
                                       },
                                     ),
                                   )),
@@ -432,7 +484,7 @@ class _VideoPageState extends State<VideoPage> {
                               ),
                             ),
                           ),
-                          Divider(),
+                          const Divider(),
                         ],
                       ),
                     ),
@@ -485,6 +537,7 @@ class _VideoPageState extends State<VideoPage> {
                         (context, index) {
                           //TODO: build recommended videos based on current video
                           int heroIndex = HeroControl.generateHeroIndex();
+                          int curVideoId = recommendedVideos[index];
                           return Column(children: [
                             Padding(
                               padding: const EdgeInsets.symmetric(
@@ -495,7 +548,7 @@ class _VideoPageState extends State<VideoPage> {
                                 onTap: () async {
                                   var page = await HeroControl.buildPageAsync(
                                       VideoPage(
-                                    video: appleAtWorkHome,
+                                    videoId: curVideoId,
                                     heroIndex: heroIndex,
                                   ));
                                   var route =
@@ -504,18 +557,18 @@ class _VideoPageState extends State<VideoPage> {
                                   Navigator.pushReplacement(context, route);
                                 },
                                 child: VideoCard(
-                                  video: appleAtWorkHome,
+                                  videoId: curVideoId,
                                   heroIndex: heroIndex,
                                 ),
                               ),
                             ),
-                            Divider(
+                            const Divider(
                               indent: 50,
                               endIndent: 50,
                             ),
                           ]);
                         },
-                        childCount: 7,
+                        childCount: recommendedVideos.length,
                       ),
                     ),
                   ],
@@ -531,6 +584,7 @@ class _VideoPageState extends State<VideoPage> {
   TextEditingController inputFieldController = TextEditingController();
   FocusNode textFieldFocused = FocusNode();
   Widget _panel(ScrollController sc) {
+    Video video = Server.getVideoById(widget.videoId);
     return MediaQuery.removePadding(
       context: context,
       removeTop: true,
@@ -546,7 +600,7 @@ class _VideoPageState extends State<VideoPage> {
         },
         child: Column(
           children: [
-            SizedBox(
+            const SizedBox(
               height: 12.0,
             ),
             Row(
@@ -630,7 +684,7 @@ class _VideoPageState extends State<VideoPage> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Container(
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                     borderRadius: BorderRadius.vertical(
                                       top: buttonBorderRadius,
                                     ),
@@ -644,6 +698,7 @@ class _VideoPageState extends State<VideoPage> {
                                   },
                                   // focusNode: textFieldFocused,
                                   controller: inputFieldController,
+
                                   decoration: InputDecoration(
                                     hintText: 'Leave a Comment',
                                     hintStyle:
@@ -654,8 +709,8 @@ class _VideoPageState extends State<VideoPage> {
                                       ),
                                     ),
                                     focusedBorder:
-                                        OutlineInputBorder().copyWith(
-                                      borderRadius: BorderRadius.vertical(
+                                        const OutlineInputBorder().copyWith(
+                                      borderRadius: const BorderRadius.vertical(
                                         top: buttonBorderRadius,
                                       ),
                                       borderSide: const BorderSide(
@@ -663,8 +718,8 @@ class _VideoPageState extends State<VideoPage> {
                                       ),
                                     ),
                                     enabledBorder:
-                                        OutlineInputBorder().copyWith(
-                                      borderRadius: BorderRadius.vertical(
+                                        const OutlineInputBorder().copyWith(
+                                      borderRadius: const BorderRadius.vertical(
                                         top: buttonBorderRadius,
                                       ),
                                       borderSide: const BorderSide(
@@ -685,8 +740,18 @@ class _VideoPageState extends State<VideoPage> {
                               ),
                               Tappable(
                                 onTap: () {
-                                  setState(() {});
-                                  //TODO: implement adding a comment
+                                  setState(
+                                    () {
+                                      video.addComment(
+                                        content: inputFieldController.text,
+                                        commenter: Database.user,
+                                        postDate: DateTime.now(),
+                                      );
+                                      inputFieldController.clear();
+                                      FocusManager.instance.primaryFocus
+                                          ?.unfocus();
+                                    },
+                                  );
                                 },
                                 child: AnimatedContainer(
                                   duration: const Duration(
@@ -728,15 +793,15 @@ class _VideoPageState extends State<VideoPage> {
                       //TODO: implement building the comments from the video list
                       ((context, index) {
                         return CommentCard(
-                          comment: Comment(
-                            content:
-                                'I love how they managed to pull it off in the end!\n\nGreat work guys!\nPerfect',
-                            postDate: DateTime.parse('2021-10-10'),
-                            commenter: appleCreator,
-                          ),
+                          comment: video.comments[index],
+                          canDelete: true,
+                          onDelete: () {
+                            video.deleteComment(video.comments[index]);
+                            setState(() {});
+                          },
                         );
                       }),
-                      childCount: 50,
+                      childCount: video.comments.length,
                     ),
                   ),
                 ],
@@ -750,8 +815,7 @@ class _VideoPageState extends State<VideoPage> {
 }
 
 class CustomLikeButton extends StatefulWidget {
-  CustomLikeButton(
-      {required bool this.isLiked, required Function(bool isLiked) this.onTap});
+  CustomLikeButton({required this.isLiked, required this.onTap});
   bool isLiked;
   Function(bool isLiked) onTap;
 
@@ -765,7 +829,7 @@ class _CustomLikeButtonState extends State<CustomLikeButton> {
     bool isLiked = widget.isLiked;
     return Tappable(
       behavior: HitTestBehavior.deferToChild,
-      fadeInDuration: Duration(milliseconds: 2000),
+      fadeInDuration: const Duration(milliseconds: 2000),
       child: Container(
         // width: 80,
         height: 80,
@@ -788,13 +852,13 @@ class _CustomLikeButtonState extends State<CustomLikeButton> {
               return !like;
             },
             size: 40,
-            padding: EdgeInsets.only(left: 2.5, top: 3),
-            circleColor: CircleColor(
+            padding: const EdgeInsets.only(left: 2.5, top: 3),
+            circleColor: const CircleColor(
               start: darkerBackground,
               end: secondaryColor,
             ),
             isLiked: isLiked,
-            animationDuration: Duration(milliseconds: 800),
+            animationDuration: const Duration(milliseconds: 800),
             likeCountAnimationType: LikeCountAnimationType.none,
             likeBuilder: (bool isLiked) {
               return Icon(
@@ -803,7 +867,7 @@ class _CustomLikeButtonState extends State<CustomLikeButton> {
                 color: isLiked ? secondaryColor : mainTextColor,
               );
             },
-            bubblesColor: BubblesColor(
+            bubblesColor: const BubblesColor(
               dotPrimaryColor: secondaryColor,
               dotSecondaryColor: darkerBackground,
             ),

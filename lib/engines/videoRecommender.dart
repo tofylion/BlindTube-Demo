@@ -4,38 +4,53 @@ import 'package:blindtube/structure/video.dart';
 import 'package:tuple/tuple.dart';
 
 class VideoRecommender {
-  static List<Video> recommendOnUser(Map<int, Video> allVids, Creator user) {
+  static List<int> recommendOnUser(Map<int, Video> allVids, Creator user) {
     ///Recommend videos to a user based on 3 parameters:
     ///
     ///liked videos
     ///subbed creators
     ///whether the video has been already watched or not
 
-    List<Tuple2<Video, int>> vidsWithRecommendedScore = [];
+    List<Tuple2<int, int>> vidsWithRecommendedScore = [];
     allVids.forEach((id, vid) {
       //Each video has a score to be more recommended. If the score is higher, it's more recommended
       int score = 0;
       //Parse liked videos and see common tags and common creators to award score
-      user.likedVideos.forEach((vid2) {
+      user.likedVideos.forEach((Video vid2) {
         score += compareTags(vid.tags, vid2.tags);
-        if (vid2.creator == vid.creator) {
+        if (vid2.creator.id == vid.creator) {
           score++;
         }
       });
+      // print(user.watchedVideos);
+      //Parse watched videos and see common tags and common creators
+      user.watchedVideos.forEach((int id, Duration checkpoint) {
+        if (id != vid.id) {
+          Video vid2 = allVids[id]!;
+          // print(vid.title + ' ' + vid2.title);
+          if (vid2.creator.id == vid.creator.id) {
+            score++;
+          }
+          score += compareTags(vid.tags, vid2.tags);
+        }
+      });
+
       //See if the video's creator is in the subbed list
       if (user.subbedTo.contains(vid.creator)) {
-        score++;
+        score += 2;
       }
       //Only add the video if it hasn't been watched yet
       if (!(user.watchedVideos.containsKey(id))) {
-        vidsWithRecommendedScore.add(Tuple2<Video, int>(vid, score));
+        vidsWithRecommendedScore.add(Tuple2<int, int>(id, score));
       }
+
+      // print(vid.title + ' ' + score.toString() + '\n');
     });
     vidsWithRecommendedScore.sort((a, b) {
       return a.item2.compareTo(b.item2);
     });
     vidsWithRecommendedScore = List.from(vidsWithRecommendedScore.reversed);
-    List<Video> res = [];
+    List<int> res = [];
     for (int i = 0; i < vidsWithRecommendedScore.length; i++) {
       res.add(vidsWithRecommendedScore[i].item1);
     }
@@ -69,18 +84,6 @@ class VideoRecommender {
       }
     });
     return score;
-  }
-
-  static List<Video> continueWatching(Creator creator) {
-    List<Video> res = [];
-    creator.watchedVideos.forEach((vidID, time) {
-      Video vid = Server.getVideoById(vidID);
-      if (time != vid.length) {
-        res.add(vid);
-      }
-    });
-
-    return res;
   }
 
   static List<Video> watchAgain(Creator creator) {

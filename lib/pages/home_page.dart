@@ -1,6 +1,7 @@
 import 'package:blindtube/components/tappable.dart';
 import 'package:blindtube/components/creator_card.dart';
 import 'package:blindtube/components/video_card.dart';
+import 'package:blindtube/engines/videoRecommender.dart';
 import 'package:blindtube/hero_control.dart';
 import 'package:blindtube/pages/creator_page.dart';
 import 'package:blindtube/pages/video_list_page.dart';
@@ -10,17 +11,37 @@ import 'package:blindtube/structure/server.dart';
 import 'package:blindtube/structure/video.dart';
 import 'package:blindtube/styles/constants.dart';
 import 'package:blindtube/styles/palette.dart';
-import 'package:blindtube/testing/test_intialisers.dart';
+import 'package:blindtube/testing/database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:spring_button/spring_button.dart';
 import 'package:infinite_carousel/infinite_carousel.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 
-class HomePage extends StatelessWidget {
+List<Video> videosList = Server.getVideosAsList();
+List<Creator> creatorsList = Server.getCreatorsAsList();
+
+class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
   Widget build(BuildContext context) {
+    List<int> watchedVideosList = Database.user.getWatchedVideosAsList();
+    List<int> recommendedVideos =
+        VideoRecommender.recommendOnUser(Server.videos, Database.user);
+    List<int> heroIndices1 = [];
+    for (var _ in watchedVideosList) {
+      heroIndices1.add(HeroControl.generateHeroIndex());
+    }
+    List<int> heroIndices2 = [];
+    for (var _ in recommendedVideos) {
+      heroIndices2.add(HeroControl.generateHeroIndex());
+    }
+    print('waw');
     return Scaffold(
       // backgroundColor: navBarColor,
       body: SafeArea(
@@ -42,13 +63,15 @@ class HomePage extends StatelessWidget {
               // snap: true,
               // floating: true,
               stretch: true,
-
+              stretchTriggerOffset: 100,
               onStretchTrigger: () async {
-                print("Stretched");
+                SchedulerBinding.instance?.addPostFrameCallback((_) {
+                  setState(() {});
+                });
+                return;
               },
-              stretchTriggerOffset: 200,
               flexibleSpace: FlexibleSpaceBar(
-                titlePadding: EdgeInsets.symmetric(vertical: 8),
+                titlePadding: const EdgeInsets.symmetric(vertical: 8),
                 centerTitle: true,
                 stretchModes: const [
                   StretchMode.blurBackground,
@@ -102,88 +125,120 @@ class HomePage extends StatelessWidget {
             SliverList(
               delegate: SliverChildListDelegate(
                 [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      CarouselTopBar(barName: 'Continue Watching'),
-                      SizedBox(
-                        height: 350,
-                        child: InfiniteCarousel.builder(
-                          itemCount: 5,
-                          itemExtent: 320,
-                          loop: false,
-                          physics: const BouncingScrollPhysics(),
-                          axisDirection: Axis.horizontal,
-                          itemBuilder: (context, itemIndex, realIndex) {
-                            int heroIndex = HeroControl.generateHeroIndex();
-                            return Tappable(
-                              onTap: () async {
-                                var page = await HeroControl.buildPageAsync(
-                                  VideoPage(
-                                    video: appleAtWorkHome,
-                                    heroIndex: heroIndex,
-                                  ),
-                                );
-                                var route =
-                                    MaterialPageRoute(builder: (_) => page);
-
-                                Navigator.push(context, route);
+                  watchedVideosList.isNotEmpty
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            CarouselTopBar(
+                              barName: 'Continue Watching',
+                              refresh: () {
+                                setState(() {});
                               },
-                              child: VideoCard(
-                                video: appleAtWorkHome,
-                                heroIndex: heroIndex,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      Divider(
-                        indent: dividerIndent,
-                        endIndent: dividerIndent,
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      CarouselTopBar(barName: 'Recommened'),
-                      SizedBox(
-                        height: 350,
-                        child: InfiniteCarousel.builder(
-                          itemCount: 5,
-                          itemExtent: 320,
-                          loop: false,
-                          physics: const BouncingScrollPhysics(),
-                          axisDirection: Axis.horizontal,
-                          itemBuilder: (context, itemIndex, realIndex) {
-                            //TODO: implement building the videos from the recommender
-                            int heroIndex = HeroControl.generateHeroIndex();
-                            return Tappable(
-                              onTap: () async {
-                                var page =
-                                    await HeroControl.buildPageAsync(VideoPage(
-                                  video: appleAtWorkHome,
-                                  heroIndex: heroIndex,
-                                ));
-                                var route =
-                                    MaterialPageRoute(builder: (_) => page);
+                              videoIds: watchedVideosList,
+                              heroIndices: heroIndices1,
+                            ),
+                            SizedBox(
+                              height: carouselHeight,
+                              child: InfiniteCarousel.builder(
+                                itemCount: watchedVideosList.length,
+                                itemExtent: carouselItemWidth,
+                                loop: false,
+                                physics: const BouncingScrollPhysics(),
+                                axisDirection: Axis.horizontal,
+                                itemBuilder: (context, itemIndex, realIndex) {
+                                  int heroIndex = heroIndices1[realIndex];
+                                  int curVideo = watchedVideosList[realIndex];
+                                  return Tappable(
+                                    onTap: () async {
+                                      var page =
+                                          await HeroControl.buildPageAsync(
+                                        VideoPage(
+                                          videoId: curVideo,
+                                          heroIndex: heroIndex,
+                                        ),
+                                      );
+                                      var route = MaterialPageRoute(
+                                          builder: (_) => page);
 
-                                Navigator.push(context, route);
-                              },
-                              child: VideoCard(
-                                video: appleAtWorkHome,
-                                heroIndex: heroIndex,
+                                      Navigator.push(context, route);
+                                    },
+                                    child: VideoCard(
+                                      videoId: curVideo,
+                                      heroIndex: heroIndex,
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                      Divider(
-                        indent: dividerIndent,
-                        endIndent: dividerIndent,
-                      ),
-                    ],
-                  ),
+                            ),
+                            const Divider(
+                              indent: dividerIndent,
+                              endIndent: dividerIndent,
+                            ),
+                          ],
+                        )
+                      : SizedBox(),
+                  recommendedVideos.isNotEmpty
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            CarouselTopBar(
+                              barName: 'Watch Next',
+                              refresh: () {
+                                setState(() {});
+                              },
+                              videoIds: recommendedVideos,
+                              heroIndices: heroIndices2,
+                            ),
+                            SizedBox(
+                              height: carouselHeight,
+                              child: InfiniteCarousel.builder(
+                                itemCount: recommendedVideos.length,
+                                itemExtent: carouselItemWidth,
+                                loop: false,
+                                physics: const BouncingScrollPhysics(),
+                                axisDirection: Axis.horizontal,
+                                itemBuilder: (context, itemIndex, realIndex) {
+                                  //TODO: implement building the videos from the recommender
+                                  int curVideoId = recommendedVideos[realIndex];
+                                  int heroIndex = heroIndices2[realIndex];
+                                  return Tappable(
+                                    onTap: () async {
+                                      var page =
+                                          await HeroControl.buildPageAsync(
+                                              VideoPage(
+                                        videoId: curVideoId,
+                                        heroIndex: heroIndex,
+                                      ));
+                                      var route = MaterialPageRoute(
+                                          builder: (_) => page);
+
+                                      Navigator.push(context, route)
+                                          // .then((_) {
+                                          //   setState(() {
+                                          //     watchedVideosList = Database.user
+                                          //         .getWatchedVideosAsList();
+                                          //     recommendedVideos =
+                                          //         VideoRecommender.recommendOnUser(
+                                          //             Server.videos, Database.user);
+                                          //   });
+                                          // })
+                                          ;
+                                    },
+                                    child: VideoCard(
+                                      videoId: curVideoId,
+                                      heroIndex: heroIndex,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            Divider(
+                              indent: dividerIndent,
+                              endIndent: dividerIndent,
+                            ),
+                          ],
+                        )
+                      : SizedBox(),
                   Column(
                     children: [
                       Padding(
@@ -215,7 +270,7 @@ class HomePage extends StatelessWidget {
                         child: SizedBox(
                           height: 180,
                           child: InfiniteCarousel.builder(
-                            itemCount: 5,
+                            itemCount: creatorsList.length,
                             itemExtent: 130,
                             velocityFactor: 0.2,
                             loop: false,
@@ -224,21 +279,26 @@ class HomePage extends StatelessWidget {
                             axisDirection: Axis.horizontal,
                             itemBuilder: (context, itemIndex, realIndex) {
                               int heroIndex = HeroControl.generateHeroIndex();
+                              Creator curCreator = creatorsList[realIndex];
                               return Tappable(
                                 child: CreatorCard(
-                                  creator: appleCreator,
+                                  creator: curCreator,
                                   heroIndex: heroIndex,
                                 ),
                                 onTap: () async {
                                   var page = await HeroControl.buildPageAsync(
                                     CreatorPage(
-                                      creator: appleCreator,
+                                      creatorId: curCreator.id,
                                       heroIndex: heroIndex,
                                     ),
                                   );
                                   var route =
                                       MaterialPageRoute(builder: (_) => page);
-                                  Navigator.push(context, route);
+                                  Navigator.push(context, route)
+                                      // .then((_) {
+                                      //   setState(() {});
+                                      // })
+                                      ;
                                 },
                               );
                             },
@@ -259,9 +319,16 @@ class HomePage extends StatelessWidget {
 }
 
 class CarouselTopBar extends StatelessWidget {
-  const CarouselTopBar({required this.barName});
+  CarouselTopBar(
+      {required this.barName,
+      this.refresh,
+      required this.videoIds,
+      this.heroIndices});
 
   final String barName;
+  Function()? refresh;
+  final List<int> videoIds;
+  final List<int>? heroIndices;
   @override
   Widget build(BuildContext context) {
     int heroIndex = HeroControl.generateHeroIndex();
@@ -291,8 +358,16 @@ class CarouselTopBar extends StatelessWidget {
                     return VideoListPage(
                       comingFrom: barName,
                       heroIndex: heroIndex,
+                      videoIds: videoIds,
+                      videoHeroIndices: heroIndices,
                     );
-                  }));
+                  }))
+                      // .then((_) {
+                      //   if (refresh != null) {
+                      //     refresh!();
+                      //   }
+                      // })
+                      ;
                 },
                 child: Center(
                   child: Text(

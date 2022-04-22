@@ -8,25 +8,42 @@ import 'package:blindtube/components/tappable.dart';
 import 'package:blindtube/components/video_card.dart';
 import 'package:blindtube/hero_control.dart';
 import 'package:blindtube/pages/video_page.dart';
+import 'package:blindtube/structure/server.dart';
+import 'package:blindtube/structure/video.dart';
 import 'package:blindtube/styles/palette.dart';
+import 'package:blindtube/testing/database.dart';
 import 'package:blindtube/testing/test_intialisers.dart';
 import 'package:flutter/material.dart';
 import 'package:blindtube/structure/creator.dart';
 
-class CreatorPage extends StatelessWidget {
-  const CreatorPage({required this.creator, this.heroIndex});
+class CreatorPage extends StatefulWidget {
+  const CreatorPage({required this.creatorId, this.heroIndex});
 
   final int? heroIndex;
-  final Creator creator;
+  final int creatorId;
+
+  @override
+  State<CreatorPage> createState() => _CreatorPageState();
+}
+
+class _CreatorPageState extends State<CreatorPage> {
   @override
   Widget build(BuildContext context) {
+    Creator creator = Server.getCreatorById(widget.creatorId);
+    List<Video> videos = creator.uploads;
+    videos.sort(
+      ((Video a, Video b) {
+        return b.publishDateTime.compareTo(a.publishDateTime);
+      }),
+    );
+    // videos = videos.reversed.toList();
     int nonFinalHeroIndex = 0;
-    if (heroIndex != null) {
-      nonFinalHeroIndex = heroIndex as int;
+    if (widget.heroIndex != null) {
+      nonFinalHeroIndex = widget.heroIndex as int;
     } else {
       nonFinalHeroIndex = -HeroControl.generateHeroIndex();
     }
-    bool subbed = true;
+
     return Scaffold(
       body: SafeArea(
         child: GestureDetector(
@@ -80,7 +97,7 @@ class CreatorPage extends StatelessWidget {
                         ),
                         child: Hero(
                           transitionOnUserGestures: true,
-                          tag: 'pic' + nonFinalHeroIndex.toString(),
+                          tag: 'creator' + nonFinalHeroIndex.toString(),
                           child: ClipOval(
                             child: Image(
                               image: ResizeImage(
@@ -133,10 +150,23 @@ class CreatorPage extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.all(10.0),
                               child: SubButton(
-                                subbed: subbed,
+                                subbed:
+                                    Database.user.subbedTo.contains(creator),
                                 height: 50,
                                 onTap: () {
-                                  //TODO: handle subbing and unsubbing
+                                  bool subbed =
+                                      Database.user.subbedTo.contains(creator);
+                                  setState(() {
+                                    if (subbed) {
+                                      Server.unSubFromCreator(
+                                          Database.user, creator);
+                                    } else {
+                                      Server.subToCreator(
+                                        Database.user,
+                                        creator,
+                                      );
+                                    }
+                                  });
                                 },
                               ),
                             ),
@@ -150,6 +180,8 @@ class CreatorPage extends StatelessWidget {
               SliverList(
                 delegate: SliverChildBuilderDelegate(
                   ((context, index) {
+                    Video curVideo = videos[index];
+
                     //TODO: build the videos for a creator sorted by the upload date: latest first
                     int heroIndex = HeroControl.generateHeroIndex();
                     return Column(children: [
@@ -162,15 +194,17 @@ class CreatorPage extends StatelessWidget {
                           onTap: () async {
                             var page =
                                 await HeroControl.buildPageAsync(VideoPage(
-                              video: appleAtWorkHome,
+                              videoId: curVideo.id,
                               heroIndex: heroIndex,
                             ));
                             var route = MaterialPageRoute(builder: (_) => page);
 
-                            Navigator.push(context, route);
+                            Navigator.push(context, route).whenComplete(() {
+                              setState(() {});
+                            });
                           },
                           child: VideoCard(
-                            video: appleAtWorkHome,
+                            videoId: curVideo.id,
                             heroIndex: heroIndex,
                           ),
                         ),
@@ -181,7 +215,7 @@ class CreatorPage extends StatelessWidget {
                       ),
                     ]);
                   }),
-                  childCount: 10,
+                  childCount: videos.length,
                 ),
               ),
             ],

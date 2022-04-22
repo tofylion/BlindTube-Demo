@@ -5,7 +5,7 @@ import 'video.dart';
 import 'defaults.dart';
 
 class Server {
-  ///The Server class is the one responsible for storing the data
+  ///The [Server] class is the one responsible for storing the data
   ///and handling all the requests to add, remove and fetch data.
   ///Data can be creators or videos stored in [creators] and [videos]
   ///The server is a dummy server representation of what might
@@ -19,7 +19,6 @@ class Server {
   ///or creators are added.
   ///Comments are always fetched along with the videos as they
   ///are an attribute list
-  ///
 
   Server();
 
@@ -33,15 +32,16 @@ class Server {
   }
 
   static int uploadVideo({
-    required videoPath,
-    required DateTime publishDateTime,
-    required DateTime length,
     required String title,
-    required Creator creator,
-    picPath = defaultVidPic,
+    required String videoPath,
+    required DateTime publishDateTime,
+    required Duration length,
+    required int creator,
+    String picPath = defaultVidPic,
     String description = '',
     int views = 0,
     int likes = 0,
+    Set<String> tags = const {},
   }) {
     ///Uploading a video would take all the video data to create
     ///a video and store it in the list.
@@ -67,17 +67,36 @@ class Server {
       publishDateTime: publishDateTime,
       length: length,
       title: title,
-      creator: creator,
+      creator: getCreatorById(creator),
       picPath: picPath,
       description: description,
       likes: likes,
       views: views,
+      tags: tags,
     );
 
     videos[id] = newVid;
-    creator.uploadVid(vid: newVid);
+    getCreatorById(creator).uploadVid(vid: newVid);
 
     return newVid.id;
+  }
+
+  static List<Video> getVideosAsList() {
+    List<Video> videosList = [];
+
+    videos.forEach((int id, Video video) {
+      videosList.add(video);
+    });
+    return videosList;
+  }
+
+  static List<Creator> getCreatorsAsList() {
+    List<Creator> creatorsList = [];
+
+    creators.forEach((int id, Creator creator) {
+      creatorsList.add(creator);
+    });
+    return creatorsList;
   }
 
   static Video removeVideo(int id) {
@@ -94,9 +113,9 @@ class Server {
   }
 
   static int addCreator({
-    required name,
-    picPath = defaultCreatorPic,
-    subscribers = 0,
+    required String name,
+    String picPath = defaultCreatorPic,
+    int subscribers = 0,
   }) {
     int id = 0;
     if (removedCreatorKeys.isNotEmpty) {
@@ -142,30 +161,36 @@ class Server {
     unSubber.unSubFrom(creator);
   }
 
-  static DateTime resumeVideo(Creator viewer, Video video) {
+  static Duration resumeVideo(Creator viewer, Video video) {
     int id = video.id;
-    Map<int, DateTime> watched = viewer.watchedVideos;
+    Map<int, Duration> watched = viewer.watchedVideos;
 
-    DateTime resumePoint;
+    Duration resumePoint;
 
     if (watched.containsKey(id)) {
       resumePoint = watched[id]!;
     } else {
-      resumePoint = DateTime(0);
+      resumePoint = const Duration(seconds: 0);
       watched[id] = resumePoint;
     }
 
     return resumePoint;
   }
 
-  static void checkPointVideo(
+  static Duration checkPointVideo(
     Creator viewer,
     Video video,
-    DateTime checkPointTime,
+    Duration checkPointTime,
   ) {
     int id = video.id;
-    Map<int, DateTime> watched = viewer.watchedVideos;
+    Map<int, Duration> watched = viewer.watchedVideos;
 
-    watched[id] = checkPointTime;
+    if (checkPointTime.compareTo(video.length) != 1) {
+      watched[id] = checkPointTime;
+    } else {
+      watched.remove(id);
+    }
+    print(checkPointTime.compareTo(video.length));
+    return checkPointTime;
   }
 }

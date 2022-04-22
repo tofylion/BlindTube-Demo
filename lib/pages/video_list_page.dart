@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:animations/animations.dart';
 import 'package:blindtube/components/tappable.dart';
 import 'package:blindtube/components/video_card.dart';
 import 'package:blindtube/hero_control.dart';
@@ -11,11 +10,16 @@ import 'package:blindtube/testing/test_intialisers.dart';
 import 'package:flutter/material.dart';
 
 class VideoListPage extends StatelessWidget {
-  const VideoListPage({required this.comingFrom, this.heroIndex});
-  //TODO: have as input a list or map of videos render
+  const VideoListPage(
+      {required this.comingFrom,
+      required this.videoIds,
+      this.heroIndex,
+      this.videoHeroIndices});
 
   final String comingFrom;
   final int? heroIndex;
+  final List<int> videoIds;
+  final List<int>? videoHeroIndices;
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +83,13 @@ class VideoListPage extends StatelessWidget {
               ),
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, itemCount) {
-                  int heroIndex = HeroControl.generateHeroIndex();
+                  int curVideo = videoIds[itemCount];
+                  int heroIndex;
+                  if (videoHeroIndices == null) {
+                    heroIndex = HeroControl.generateHeroIndex();
+                  } else {
+                    heroIndex = videoHeroIndices![itemCount];
+                  }
                   return Column(children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(
@@ -89,7 +99,7 @@ class VideoListPage extends StatelessWidget {
                       child: Tappable(
                         onTap: () async {
                           var page = await HeroControl.buildPageAsync(VideoPage(
-                            video: appleAtWorkHome,
+                            videoId: curVideo,
                             heroIndex: heroIndex,
                           ));
                           var route = MaterialPageRoute(builder: (_) => page);
@@ -97,7 +107,7 @@ class VideoListPage extends StatelessWidget {
                           Navigator.push(context, route);
                         },
                         child: VideoCard(
-                          video: appleAtWorkHome,
+                          videoId: curVideo,
                           heroIndex: heroIndex,
                         ),
                       ),
@@ -107,7 +117,7 @@ class VideoListPage extends StatelessWidget {
                       endIndent: 50,
                     ),
                   ]);
-                }, childCount: 5),
+                }, childCount: videoIds.length),
               ),
             ],
           ),

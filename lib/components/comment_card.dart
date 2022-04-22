@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:sprung/sprung.dart';
 
 class CommentCard extends StatefulWidget {
-  const CommentCard({required this.comment, this.canDelete = false});
+  const CommentCard(
+      {required this.comment, this.canDelete = false, this.onDelete});
 
   final Comment comment;
   final bool canDelete;
+  final Function()? onDelete;
   @override
   State<CommentCard> createState() => _CommentCardState();
 }
@@ -116,9 +118,7 @@ class _CommentCardState extends State<CommentCard> {
           ),
         ),
         Tappable(
-          onTap: () {
-            //TODO: implement deleting comment
-          },
+          onTap: widget.onDelete,
           child: AnimatedContainer(
             duration: Duration(milliseconds: 1000),
             curve: Sprung.overDamped,

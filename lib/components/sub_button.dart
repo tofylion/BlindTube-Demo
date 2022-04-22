@@ -34,12 +34,11 @@ class _SubButtonState extends State<SubButton> {
   @override
   Widget build(BuildContext context) {
     return Tappable(
-      fadeInDuration: Duration(seconds: 3),
       onTap: () {
-        setState(() {});
         if (widget.onTap != null) {
           widget.onTap!();
         }
+        setState(() {});
       },
       child: Container(
         height: widget.height,

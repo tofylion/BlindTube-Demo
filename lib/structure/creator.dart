@@ -22,7 +22,7 @@ class Creator {
   ///modeled as a map as follows: Video Id, time of video watched.
   ///This would make it so that the creator can resume
   ///a video that they watched before if they'd like to
-  Map<int, DateTime> watchedVideos = {};
+  Map<int, Duration> watchedVideos = {};
 
   int uploadVid({
     required Video vid,
@@ -55,5 +55,14 @@ class Creator {
     }
 
     return creatorSubs;
+  }
+
+  List<int> getWatchedVideosAsList() {
+    List<int> watchedVideosList = [];
+    watchedVideos.forEach((id, duration) {
+      watchedVideosList.add(id);
+    });
+    watchedVideosList = watchedVideosList.reversed.toList();
+    return watchedVideosList;
   }
 }

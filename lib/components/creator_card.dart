@@ -63,7 +63,7 @@ class CreatorCard extends StatelessWidget {
                     flex: 10,
                     child: Hero(
                       transitionOnUserGestures: true,
-                      tag: 'pic' + nonFinalHeroIndex.toString(),
+                      tag: 'creator' + nonFinalHeroIndex.toString(),
                       child: ClipOval(
                         child: Image.asset(
                           creator.picPath,

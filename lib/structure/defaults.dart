@@ -1,2 +1,2 @@
 const defaultVidPic = '';
-const defaultCreatorPic = '';
+const defaultCreatorPic = 'assets/images/default.png';

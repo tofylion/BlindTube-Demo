@@ -5,11 +5,11 @@ import 'defaults.dart';
 class Video {
   Video({
     required this.id,
+    required this.title,
     required this.videoPath,
     required this.publishDateTime,
     required this.length,
     required this.creator,
-    required this.title,
     this.picPath = defaultVidPic,
     this.description = '',
     this.views = 0,
@@ -18,17 +18,17 @@ class Video {
   });
 
   int id;
-  String videoPath;
-  String picPath;
   String title;
-  String description;
+  String videoPath;
   DateTime publishDateTime;
+  Duration length;
+  String picPath;
+  String description;
   int views;
-  DateTime length;
   Creator creator;
-  List<Comment> comments = [];
   int likes;
   Set<String> tags;
+  List<Comment> comments = [];
 
   Comment addComment({
     required String content,
@@ -74,19 +74,53 @@ class Video {
   }
 
   String getLengthAsString() {
-    DateTime rawVideoLength = length;
-    String videoLength = '';
-    if (rawVideoLength.hour != 0) {
-      videoLength += rawVideoLength.hour.toString() + ':';
+    Duration rawVideoLength = length;
+    String videoLength = rawVideoLength.toString();
+    if (rawVideoLength.inHours == 0) {
+      videoLength = videoLength.substring(2);
     }
-    if (rawVideoLength.minute < 10) {
-      videoLength += '0';
-    }
-    videoLength += rawVideoLength.minute.toStringAsFixed(0) + ':';
-    if (rawVideoLength.second < 10) {
-      videoLength += '0';
-    }
-    videoLength += rawVideoLength.second.toStringAsFixed(0);
+    videoLength = videoLength.substring(0, videoLength.length - 7);
+
     return videoLength;
+  }
+
+  String getPublishDateAsString() {
+    String day = publishDateTime.day.toString();
+    String month = _getMonthFromInt(publishDateTime.month);
+    String year = publishDateTime.year.toString();
+
+    return month + ' ' + day + ', ' + year;
+  }
+
+  String _getMonthFromInt(int month) {
+    assert(month >= 1 && month <= 12);
+    switch (month) {
+      case 1:
+        return 'Jan';
+      case 2:
+        return 'Feb';
+      case 3:
+        return 'Mar';
+      case 4:
+        return 'Apr';
+      case 5:
+        return 'May';
+      case 6:
+        return 'June';
+      case 7:
+        return 'July';
+      case 8:
+        return 'Aug';
+      case 9:
+        return 'Sep';
+      case 10:
+        return 'Dec';
+      case 11:
+        return 'Nov';
+      case 12:
+        return 'Dec';
+      default:
+        return 'None';
+    }
   }
 }
