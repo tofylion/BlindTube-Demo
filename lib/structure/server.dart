@@ -190,7 +190,7 @@ class Server {
     } else {
       watched.remove(id);
     }
-    print(checkPointTime.compareTo(video.length));
+    // print(checkPointTime.compareTo(video.length));
     return checkPointTime;
   }
 }

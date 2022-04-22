@@ -1,14 +1,14 @@
-//All the database in a human-readable format. JSON-like structure
 //All the database in a human-readable format.
 
 import 'package:blindtube/structure/creator.dart';
 import 'package:blindtube/structure/server.dart';
 
 class Database {
-  static Creator user = Creator(
-    id: -1,
-    name: 'User',
-  );
+  static late Creator user;
+
+  static void initialiseUser(String name) {
+    user = Creator(id: -1, name: name);
+  }
 
   static void populateDatabase() {
     //Adding all creators to the database and saving the id of each one

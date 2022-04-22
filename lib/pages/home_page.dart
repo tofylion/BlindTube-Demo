@@ -16,20 +16,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:spring_button/spring_button.dart';
 import 'package:infinite_carousel/infinite_carousel.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 List<Video> videosList = Server.getVideosAsList();
 List<Creator> creatorsList = Server.getCreatorsAsList();
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({this.heroIndex});
 
+  final int? heroIndex;
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  late int nonFinalHeroIndex;
   @override
   Widget build(BuildContext context) {
+    if (widget.heroIndex != null) {
+      nonFinalHeroIndex = widget.heroIndex!;
+    } else {
+      nonFinalHeroIndex = -HeroControl.generateHeroIndex();
+    }
     List<int> watchedVideosList = Database.user.getWatchedVideosAsList();
     List<int> recommendedVideos =
         VideoRecommender.recommendOnUser(Server.videos, Database.user);
@@ -41,7 +49,6 @@ class _HomePageState extends State<HomePage> {
     for (var _ in recommendedVideos) {
       heroIndices2.add(HeroControl.generateHeroIndex());
     }
-    print('waw');
     return Scaffold(
       // backgroundColor: navBarColor,
       body: SafeArea(
@@ -59,7 +66,8 @@ class _HomePageState extends State<HomePage> {
               elevation: 0,
               expandedHeight: 300,
               pinned: true,
-
+              automaticallyImplyLeading: false,
+              excludeHeaderSemantics: true,
               // snap: true,
               // floating: true,
               stretch: true,
@@ -70,6 +78,7 @@ class _HomePageState extends State<HomePage> {
                 });
                 return;
               },
+
               flexibleSpace: FlexibleSpaceBar(
                 titlePadding: const EdgeInsets.symmetric(vertical: 8),
                 centerTitle: true,
@@ -89,11 +98,20 @@ class _HomePageState extends State<HomePage> {
                           maxHeight: 100,
                           maxWidth: 80,
                         ),
-                        child: SpringButton(
-                          SpringButtonType.OnlyScale,
-                          Image.asset('assets/images/BlindTubeLogo.png'),
-                          useCache: false,
-                          onTap: () {},
+                        child: Hero(
+                          tag: 'logo' + nonFinalHeroIndex.toString(),
+                          child: SpringButton(
+                            SpringButtonType.OnlyScale,
+                            Image(
+                              image: ResizeImage(
+                                Image.asset('assets/images/BlindTubeLogo.png')
+                                    .image,
+                                width: 240,
+                              ),
+                            ),
+                            useCache: true,
+                            onTap: () {},
+                          ),
                         ),
                       ),
                       Row(
@@ -150,17 +168,40 @@ class _HomePageState extends State<HomePage> {
                                   int curVideo = watchedVideosList[realIndex];
                                   return Tappable(
                                     onTap: () async {
-                                      var page =
-                                          await HeroControl.buildPageAsync(
-                                        VideoPage(
-                                          videoId: curVideo,
-                                          heroIndex: heroIndex,
-                                        ),
-                                      );
-                                      var route = MaterialPageRoute(
-                                          builder: (_) => page);
+                                      final LoginResult result =
+                                          await FacebookAuth.instance.login();
+                                      if (result.status ==
+                                          LoginStatus.success) {
+                                        // you are logged
+                                        final AccessToken accessToken =
+                                            result.accessToken!;
+                                        final userData = await FacebookAuth
+                                            .instance
+                                            .getUserData();
+                                        Database.user.name =
+                                            (userData['name'] as String)
+                                                .split(' ')[0];
+                                        var page =
+                                            await HeroControl.buildPageAsync(
+                                          VideoPage(
+                                            videoId: curVideo,
+                                            heroIndex: heroIndex,
+                                          ),
+                                        );
+                                        var route = MaterialPageRoute(
+                                            builder: (_) => page);
 
-                                      Navigator.push(context, route);
+                                        Navigator.push(context, route)
+                                            .then((_) {
+                                          SchedulerBinding.instance
+                                              ?.addPostFrameCallback((_) {
+                                            setState(() {});
+                                          });
+                                        });
+                                      } else {
+                                        print(result.status);
+                                        print(result.message);
+                                      }
                                     },
                                     child: VideoCard(
                                       videoId: curVideo,
@@ -212,17 +253,12 @@ class _HomePageState extends State<HomePage> {
                                       var route = MaterialPageRoute(
                                           builder: (_) => page);
 
-                                      Navigator.push(context, route)
-                                          // .then((_) {
-                                          //   setState(() {
-                                          //     watchedVideosList = Database.user
-                                          //         .getWatchedVideosAsList();
-                                          //     recommendedVideos =
-                                          //         VideoRecommender.recommendOnUser(
-                                          //             Server.videos, Database.user);
-                                          //   });
-                                          // })
-                                          ;
+                                      Navigator.push(context, route).then((_) {
+                                        SchedulerBinding.instance
+                                            ?.addPostFrameCallback((_) {
+                                          setState(() {});
+                                        });
+                                      });
                                     },
                                     child: VideoCard(
                                       videoId: curVideoId,
@@ -294,11 +330,12 @@ class _HomePageState extends State<HomePage> {
                                   );
                                   var route =
                                       MaterialPageRoute(builder: (_) => page);
-                                  Navigator.push(context, route)
-                                      // .then((_) {
-                                      //   setState(() {});
-                                      // })
-                                      ;
+                                  Navigator.push(context, route).then((_) {
+                                    SchedulerBinding.instance
+                                        ?.addPostFrameCallback((_) {
+                                      setState(() {});
+                                    });
+                                  });
                                 },
                               );
                             },
@@ -361,13 +398,13 @@ class CarouselTopBar extends StatelessWidget {
                       videoIds: videoIds,
                       videoHeroIndices: heroIndices,
                     );
-                  }))
-                      // .then((_) {
-                      //   if (refresh != null) {
-                      //     refresh!();
-                      //   }
-                      // })
-                      ;
+                  })).then((_) {
+                    if (refresh != null) {
+                      SchedulerBinding.instance?.addPostFrameCallback((_) {
+                        refresh!();
+                      });
+                    }
+                  });
                 },
                 child: Center(
                   child: Text(

@@ -1,5 +1,6 @@
 import 'package:blindtube/engines/videoRecommender.dart';
 import 'package:blindtube/pages/home_page.dart';
+import 'package:blindtube/pages/landing.dart';
 import 'package:blindtube/structure/server.dart';
 import 'package:blindtube/structure/video.dart';
 
@@ -21,6 +22,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!databaseBuilt) {
+      Database.initialiseUser('Mostafa');
       Database.populateDatabase();
       databaseBuilt = true;
     }
@@ -110,7 +112,7 @@ class MyApp extends StatelessWidget {
         ),
         dividerColor: fadedTextColor,
       ),
-      home: HomePage(),
+      home: LandingPage(),
     );
   }
 }

@@ -1,4 +1,6 @@
 import 'package:blindtube/components/tappable.dart';
+import 'package:blindtube/hero_control.dart';
+import 'package:blindtube/pages/home_page.dart';
 import 'package:blindtube/styles/constants.dart';
 import 'package:blindtube/styles/palette.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +22,8 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> {
+  int heroIndex = HeroControl.generateHeroIndex();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,11 +32,21 @@ class _LandingPageState extends State<LandingPage> {
           Expanded(child: SizedBox()),
           Expanded(
             flex: 7,
-            child: SpringButton(
-              SpringButtonType.OnlyScale,
-              Image.asset('assets/images/BlindTubeLogo.png'),
-              onTap: () {},
-              useCache: false,
+            child: Hero(
+              tag: 'logo' + heroIndex.toString(),
+              child: SpringButton(
+                SpringButtonType.OnlyScale,
+                Image(
+                  image: ResizeImage(
+                    Image.asset('assets/images/BlindTubeLogo.png').image,
+                    width: 1080,
+                    allowUpscaling: true,
+                  ),
+                  width: 1080,
+                ),
+                onTap: () {},
+                useCache: false,
+              ),
             ),
           ),
           Expanded(
@@ -71,6 +85,13 @@ class _LandingPageState extends State<LandingPage> {
                         buttonColor: lighterCardColor,
                       ),
                     ),
+                    onTap: () async {
+                      var page = await HeroControl.buildPageAsync(HomePage(
+                        heroIndex: heroIndex,
+                      ));
+                      var route = MaterialPageRoute(builder: (context) => page);
+                      await Navigator.pushReplacement(context, route);
+                    },
                   ),
                   Tappable(
                     child: TwitterAuthButton(

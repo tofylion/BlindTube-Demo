@@ -70,7 +70,7 @@ class VideoCard extends StatelessWidget {
                         // width: 60,
                         isAntiAlias: true,
                       ).image,
-                      width: 1002,
+                      width: 930,
                       allowUpscaling: true,
                     ),
                   ),

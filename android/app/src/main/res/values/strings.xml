@@ -1,3 +1,5 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:bb7d2d7731814c4a9e917ef48ed11fc466bb3aa9e9c4af3ce0d9d94e5f6003d7
-size 173
+<resources>
+    
+    <string name="facebook_app_id">354076726757184</string>
+    <string name="facebook_client_token">af01bd2d2e49885e0f3ea1c6a4f26d4e</string>
+</resources>

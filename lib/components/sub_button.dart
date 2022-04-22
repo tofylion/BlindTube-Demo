@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-version https://git-lfs.github.com/spec/v1
-oid sha256:f097aa126666700fd2015574128e1d89abe10efd1beab1599e49aea06d72a40e
-size 1445
-=======
 import 'package:blindtube/components/tappable.dart';
 import 'package:blindtube/styles/constants.dart';
 import 'package:blindtube/styles/palette.dart';
@@ -62,4 +57,3 @@ class _SubButtonState extends State<SubButton> {
     );
   }
 }
->>>>>>> 706e8ce (Finished video page and creator page)

@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-version https://git-lfs.github.com/spec/v1
-oid sha256:e387316043e7b97c00bdf063a1319c4c51310485781a7fd5167da5c5e147a51a
-size 8516
-=======
 import 'package:blindtube/components/sub_button.dart';
 import 'package:blindtube/components/tappable.dart';
 import 'package:blindtube/components/video_card.dart';
@@ -199,9 +194,7 @@ class _CreatorPageState extends State<CreatorPage> {
                             ));
                             var route = MaterialPageRoute(builder: (_) => page);
 
-                            Navigator.push(context, route).whenComplete(() {
-                              setState(() {});
-                            });
+                            Navigator.push(context, route);
                           },
                           child: VideoCard(
                             videoId: curVideo.id,
@@ -225,4 +218,3 @@ class _CreatorPageState extends State<CreatorPage> {
     );
   }
 }
->>>>>>> 706e8ce (Finished video page and creator page)
