@@ -177,14 +177,14 @@ class _VideoPageState extends State<VideoPage> {
               AnimatedContainer(
                 // clipBehavior: Clip.antiAlias,
                 duration: const Duration(
-                  milliseconds: 1000,
+                  milliseconds: 500,
                 ),
 
-                height: !vidHeight.isNaN ? vidHeight : 300,
+                height: !vidHeight.isNaN ? vidHeight : 200,
                 // constraints: BoxConstraints(
                 //   maxHeight: !vidHeight.isNaN ? vidHeight : 500,
                 // ),
-                curve: Sprung.overDamped.flipped,
+                curve: Sprung.overDamped,
                 child: Hero(
                   transitionOnUserGestures: true,
                   tag: 'video' + nonFinalHeroIndex.toString(),
@@ -535,7 +535,6 @@ class _VideoPageState extends State<VideoPage> {
                     SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
-                          //TODO: build recommended videos based on current video
                           int heroIndex = HeroControl.generateHeroIndex();
                           int curVideoId = recommendedVideos[index];
                           return Column(children: [
@@ -790,10 +789,10 @@ class _VideoPageState extends State<VideoPage> {
                   ),
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      //TODO: implement building the comments from the video list
                       ((context, index) {
                         return CommentCard(
-                          comment: video.comments[index],
+                          comment:
+                              video.comments[video.comments.length - index - 1],
                           canDelete: true,
                           onDelete: () {
                             video.deleteComment(video.comments[index]);
