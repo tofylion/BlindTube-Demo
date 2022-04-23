@@ -5,6 +5,7 @@ import 'package:blindtube/styles/constants.dart';
 import 'package:blindtube/styles/palette.dart';
 import 'package:blindtube/testing/database.dart';
 import 'package:flutter/material.dart';
+import 'package:blindtube/secrets.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:spring_button/spring_button.dart';
 import 'package:auth_buttons/auth_buttons.dart'
@@ -15,6 +16,9 @@ import 'package:auth_buttons/auth_buttons.dart'
         AuthIconType,
         FacebookAuthButton,
         TwitterAuthButton;
+import 'package:twitter_login/entity/auth_result.dart';
+import 'package:twitter_login/twitter_login.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({Key? key}) : super(key: key);
@@ -111,15 +115,37 @@ class _LandingPageState extends State<LandingPage> {
                         }
                       }),
                   Tappable(
-                    child: TwitterAuthButton(
-                      darkMode: true,
-                      style: AuthButtonStyle(
-                        // iconColor: Color(0xFF1DA1F2),
-                        buttonType: AuthButtonType.icon,
-                        buttonColor: lighterCardColor,
+                      child: TwitterAuthButton(
+                        darkMode: true,
+                        style: AuthButtonStyle(
+                          // iconColor: Color(0xFF1DA1F2),
+                          buttonType: AuthButtonType.icon,
+                          buttonColor: lighterCardColor,
+                        ),
                       ),
-                    ),
-                  ),
+                      onTap: () async {
+                        final TwitterLogin twitterLogin = TwitterLogin(
+                          apiKey: 'EkoX2ROTXOAOqpfhtNAx7zag8',
+                          apiSecretKey:
+                              'nxCWcBSjxg52lYaNZE1jVXhcd5ip3UStZImW79wrph6SxxOutu',
+                          redirectURI: "blindtube://",
+                        );
+                        print(twitterLogin.apiSecretKey);
+                        final authResult = await twitterLogin.loginV2();
+                        if (authResult.status == TwitterLoginStatus.loggedIn) {
+                          Database.user.name = authResult.user!.name;
+
+                          var page = await HeroControl.buildPageAsync(HomePage(
+                            heroIndex: heroIndex,
+                          ));
+                          var route =
+                              MaterialPageRoute(builder: (context) => page);
+                          Navigator.pushReplacement(context, route);
+                        } else {
+                          print(authResult.status);
+                          print(authResult.errorMessage);
+                        }
+                      }),
                   Tappable(
                     child: GoogleAuthButton(
                       darkMode: true,
@@ -129,6 +155,24 @@ class _LandingPageState extends State<LandingPage> {
                         buttonType: AuthButtonType.icon,
                       ),
                     ),
+                    onTap: () async {
+                      GoogleSignIn googleSignIn = GoogleSignIn.standard(
+                        scopes: [
+                          'https://www.googleapis.com/auth/userinfo.profile',
+                        ],
+                      );
+                      try {
+                        await googleSignIn.signIn();
+                        var page = await HeroControl.buildPageAsync(HomePage(
+                          heroIndex: heroIndex,
+                        ));
+                        var route =
+                            MaterialPageRoute(builder: (context) => page);
+                        Navigator.pushReplacement(context, route);
+                      } catch (error) {
+                        print(error);
+                      }
+                    },
                   ),
                 ],
               )),
