@@ -215,362 +215,377 @@ class _VideoPageState extends State<VideoPage> {
                 ),
               ),
               Expanded(
-                child: CustomScrollView(
-                  shrinkWrap: true,
-                  clipBehavior: Clip.antiAlias,
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    SliverList(
-                      delegate: SliverChildListDelegate(
-                        [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 15,
-                            ),
-                            child: Hero(
-                              transitionOnUserGestures: true,
-                              tag: 'title' + nonFinalHeroIndex.toString(),
-                              child: AutoSizeText(
-                                video.title,
-                                style:
-                                    Theme.of(context).textTheme.headlineLarge,
-                                softWrap: true,
-                                textScaleFactor: 0.8,
-                                maxLines: 3,
-                              ),
-                            ),
-                          ),
-                          IntrinsicHeight(
-                            child: Padding(
+                child: GestureDetector(
+                  onHorizontalDragUpdate: ((details) {
+                    if (details.primaryDelta! > 10) {
+                      Navigator.pop(context);
+                    }
+                  }),
+                  child: CustomScrollView(
+                    shrinkWrap: true,
+                    clipBehavior: Clip.antiAlias,
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      SliverList(
+                        delegate: SliverChildListDelegate(
+                          [
+                            Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
-                                vertical: 5,
+                                vertical: 15,
                               ),
                               child: Hero(
                                 transitionOnUserGestures: true,
-                                tag: 'info' + nonFinalHeroIndex.toString(),
+                                tag: 'title' + nonFinalHeroIndex.toString(),
+                                child: AutoSizeText(
+                                  video.title,
+                                  style:
+                                      Theme.of(context).textTheme.headlineLarge,
+                                  softWrap: true,
+                                  textScaleFactor: 0.8,
+                                  maxLines: 3,
+                                ),
+                              ),
+                            ),
+                            IntrinsicHeight(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                child: Hero(
+                                  transitionOnUserGestures: true,
+                                  tag: 'info' + nonFinalHeroIndex.toString(),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        videoLength,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge,
+                                      ),
+                                      const VerticalDivider(),
+                                      Text(
+                                        videoViews + ' views',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge,
+                                      ),
+                                      const VerticalDivider(),
+                                      Text(
+                                        video.getPublishDateAsString(),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            IntrinsicHeight(
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                // crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Flexible(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 30,
+                                      ),
+                                      child: CustomLikeButton(
+                                        isLiked: videoLiked,
+                                        onTap: (isLiked) {
+                                          setState(() {
+                                            if (videoLiked) {
+                                              Server.unlikeVideo(
+                                                Database.user,
+                                                video,
+                                              );
+                                            } else {
+                                              Server.likeVideo(
+                                                Database.user,
+                                                video,
+                                              );
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  Flexible(
+                                    child: Tappable(
+                                      behavior: HitTestBehavior.deferToChild,
+                                      fadeInDuration:
+                                          const Duration(milliseconds: 2000),
+                                      child: Container(
+                                        // width: 80,
+                                        height: 80,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: navBarColor,
+                                          border: Border.all(
+                                            width: 0.5,
+                                            color: mainTextColor,
+                                          ),
+                                        ),
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.message,
+                                            color: mainTextColor,
+                                            size: 35,
+                                          ),
+                                        ),
+                                      ),
+                                      onTap: () {
+                                        setState(() {
+                                          commentsShown = !commentsShown;
+                                        });
+                                        return _panelController.open();
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 10,
+                              ),
+                              child: Tappable(
+                                child: Hero(
+                                  transitionOnUserGestures: true,
+                                  tag: 'desc' + nonFinalHeroIndex.toString(),
+                                  child: Text(
+                                    desc,
+                                    style:
+                                        Theme.of(context).textTheme.bodyLarge,
+                                    maxLines: descCollapsed ? 3 : 100,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                onTap: () {
+                                  // print(descCollapsed);
+                                  setState(() {
+                                    descCollapsed = !descCollapsed;
+                                  });
+                                },
+                              ),
+                            ),
+                            const Divider(),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: IntrinsicHeight(
                                 child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
-                                    Text(
-                                      videoLength,
-                                      style:
-                                          Theme.of(context).textTheme.bodyLarge,
+                                    Expanded(
+                                      flex: 2,
+                                      child: Tappable(
+                                        onTap: () {
+                                          Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) {
+                                                return CreatorPage(
+                                                  creatorId: creator.id,
+                                                  heroIndex: nonFinalHeroIndex,
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        },
+                                        child: Row(
+                                          children: [
+                                            Hero(
+                                              transitionOnUserGestures: true,
+                                              tag: 'creatorPic' +
+                                                  nonFinalHeroIndex.toString(),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                    color: secondaryColor,
+                                                    width: 0.5,
+                                                  ),
+                                                  shape: BoxShape.circle,
+                                                  color: cardColor,
+                                                ),
+                                                child: ClipOval(
+                                                  child: Image(
+                                                    image: ResizeImage(
+                                                      Image.asset(
+                                                        videoCreator.picPath,
+                                                        // width: 60,
+                                                        isAntiAlias: true,
+                                                      ).image,
+                                                      width: 135,
+                                                      allowUpscaling: true,
+                                                    ),
+                                                    width: 60,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 15),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Padding(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      vertical: 5,
+                                                    ),
+                                                    child: Text(
+                                                      videoCreator.name,
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .titleMedium,
+                                                    ),
+                                                  ),
+                                                  Padding(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      vertical: 5,
+                                                    ),
+                                                    child: Text(
+                                                      creatorSubs +
+                                                          ' subscribers',
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .titleSmall,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                    const VerticalDivider(),
-                                    Text(
-                                      videoViews + ' views',
-                                      style:
-                                          Theme.of(context).textTheme.bodyLarge,
-                                    ),
-                                    const VerticalDivider(),
-                                    Text(
-                                      video.getPublishDateAsString(),
-                                      style:
-                                          Theme.of(context).textTheme.bodyLarge,
-                                    ),
+                                    Expanded(
+                                        child: Padding(
+                                      padding: const EdgeInsets.all(10.0),
+                                      child: SubButton(
+                                        subbed: subbed,
+                                        onTap: () {
+                                          setState(() {
+                                            if (subbed) {
+                                              Server.unSubFromCreator(
+                                                Database.user,
+                                                creator,
+                                              );
+                                            } else {
+                                              Server.subToCreator(
+                                                Database.user,
+                                                creator,
+                                              );
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    )),
                                   ],
                                 ),
                               ),
                             ),
-                          ),
-                          IntrinsicHeight(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              // crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Flexible(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 30,
-                                    ),
-                                    child: CustomLikeButton(
-                                      isLiked: videoLiked,
-                                      onTap: (isLiked) {
-                                        setState(() {
-                                          if (videoLiked) {
-                                            Server.unlikeVideo(
-                                              Database.user,
-                                              video,
-                                            );
-                                          } else {
-                                            Server.likeVideo(
-                                              Database.user,
-                                              video,
-                                            );
-                                          }
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                Flexible(
-                                  child: Tappable(
-                                    behavior: HitTestBehavior.deferToChild,
-                                    fadeInDuration:
-                                        const Duration(milliseconds: 2000),
-                                    child: Container(
-                                      // width: 80,
-                                      height: 80,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: navBarColor,
-                                        border: Border.all(
-                                          width: 0.5,
-                                          color: mainTextColor,
-                                        ),
-                                      ),
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.message,
-                                          color: mainTextColor,
-                                          size: 35,
-                                        ),
-                                      ),
-                                    ),
-                                    onTap: () {
-                                      setState(() {
-                                        commentsShown = !commentsShown;
-                                      });
-                                      return _panelController.open();
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 10,
-                            ),
-                            child: Tappable(
-                              child: Hero(
-                                transitionOnUserGestures: true,
-                                tag: 'desc' + nonFinalHeroIndex.toString(),
-                                child: Text(
-                                  desc,
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                  maxLines: descCollapsed ? 3 : 100,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              onTap: () {
-                                // print(descCollapsed);
-                                setState(() {
-                                  descCollapsed = !descCollapsed;
-                                });
-                              },
-                            ),
-                          ),
-                          const Divider(),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: IntrinsicHeight(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(
-                                    flex: 2,
-                                    child: Tappable(
-                                      onTap: () {
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) {
-                                              return CreatorPage(
-                                                creatorId: creator.id,
-                                                heroIndex: nonFinalHeroIndex,
-                                              );
-                                            },
-                                          ),
-                                        );
-                                      },
-                                      child: Row(
-                                        children: [
-                                          Hero(
-                                            transitionOnUserGestures: true,
-                                            tag: 'creatorPic' +
-                                                nonFinalHeroIndex.toString(),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                  color: secondaryColor,
-                                                  width: 0.5,
-                                                ),
-                                                shape: BoxShape.circle,
-                                                color: cardColor,
-                                              ),
-                                              child: ClipOval(
-                                                child: Image(
-                                                  image: ResizeImage(
-                                                    Image.asset(
-                                                      videoCreator.picPath,
-                                                      // width: 60,
-                                                      isAntiAlias: true,
-                                                    ).image,
-                                                    width: 135,
-                                                    allowUpscaling: true,
-                                                  ),
-                                                  width: 60,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 15),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                    vertical: 5,
-                                                  ),
-                                                  child: Text(
-                                                    videoCreator.name,
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .titleMedium,
-                                                  ),
-                                                ),
-                                                Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                    vertical: 5,
-                                                  ),
-                                                  child: Text(
-                                                    creatorSubs +
-                                                        ' subscribers',
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .titleSmall,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                      child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: SubButton(
-                                      subbed: subbed,
-                                      onTap: () {
-                                        setState(() {
-                                          if (subbed) {
-                                            Server.unSubFromCreator(
-                                              Database.user,
-                                              creator,
-                                            );
-                                          } else {
-                                            Server.subToCreator(
-                                              Database.user,
-                                              creator,
-                                            );
-                                          }
-                                        });
-                                      },
-                                    ),
-                                  )),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const Divider(),
-                        ],
-                      ),
-                    ),
-                    // SliverList(
-                    //   delegate: SliverChildListDelegate([
-                    //     Text('Watch next'),
-                    //   ]),
-                    // ),
-                    SliverAppBar(
-                      automaticallyImplyLeading: false,
-                      excludeHeaderSemantics: true,
-                      pinned: true,
-                      backgroundColor: navBarColor.withOpacity(0.8),
-                      elevation: 0,
-                      expandedHeight: 150,
-                      flexibleSpace: FlexibleSpaceBar(
-                        background: Container(
-                          color: backgroundColor,
-                        ),
-                        titlePadding: EdgeInsets.zero,
-                        expandedTitleScale: 1.2,
-                        centerTitle: false,
-                        title: Stack(
-                          children: [
-                            BackdropFilter(
-                              filter: ImageFilter.blur(
-                                sigmaX: blurRadius,
-                                sigmaY: blurRadius,
-                              ),
-                              child: Container(
-                                color: backgroundColor.withOpacity(0.3),
-                              ),
-                            ),
-                            Center(
-                              heightFactor: 7,
-                              widthFactor: 2.5,
-                              child: Text(
-                                'Watch Next',
-                                textAlign: TextAlign.left,
-                                style:
-                                    Theme.of(context).textTheme.headlineMedium,
-                              ),
-                            ),
+                            const Divider(),
                           ],
                         ),
                       ),
-                    ),
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          int heroIndex = HeroControl.generateHeroIndex();
-                          int curVideoId = recommendedVideos[index];
-                          return Column(children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 20,
-                              ),
-                              child: Tappable(
-                                onTap: () async {
-                                  var page = await HeroControl.buildPageAsync(
-                                      VideoPage(
-                                    videoId: curVideoId,
-                                    heroIndex: heroIndex,
-                                  ));
-                                  var route =
-                                      MaterialPageRoute(builder: (_) => page);
-
-                                  Navigator.pushReplacement(context, route);
-                                },
-                                child: VideoCard(
-                                  videoId: curVideoId,
-                                  heroIndex: heroIndex,
+                      // SliverList(
+                      //   delegate: SliverChildListDelegate([
+                      //     Text('Watch next'),
+                      //   ]),
+                      // ),
+                      SliverAppBar(
+                        automaticallyImplyLeading: false,
+                        excludeHeaderSemantics: true,
+                        pinned: true,
+                        backgroundColor: navBarColor.withOpacity(0.8),
+                        elevation: 0,
+                        expandedHeight: 150,
+                        flexibleSpace: FlexibleSpaceBar(
+                          background: Container(
+                            color: backgroundColor,
+                          ),
+                          titlePadding: EdgeInsets.zero,
+                          expandedTitleScale: 1.2,
+                          centerTitle: false,
+                          title: Stack(
+                            children: [
+                              BackdropFilter(
+                                filter: ImageFilter.blur(
+                                  sigmaX: blurRadius,
+                                  sigmaY: blurRadius,
+                                ),
+                                child: Container(
+                                  color: backgroundColor.withOpacity(0.3),
                                 ),
                               ),
-                            ),
-                            const Divider(
-                              indent: 50,
-                              endIndent: 50,
-                            ),
-                          ]);
-                        },
-                        childCount: recommendedVideos.length,
+                              Center(
+                                heightFactor: 7,
+                                widthFactor: 2.5,
+                                child: Text(
+                                  'Watch Next',
+                                  textAlign: TextAlign.left,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            int heroIndex = HeroControl.generateHeroIndex();
+                            int curVideoId = recommendedVideos[index];
+                            return Column(children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 20,
+                                ),
+                                child: Tappable(
+                                  onTap: () async {
+                                    var page = await HeroControl.buildPageAsync(
+                                        VideoPage(
+                                      videoId: curVideoId,
+                                      heroIndex: heroIndex,
+                                    ));
+                                    var route =
+                                        MaterialPageRoute(builder: (_) => page);
+
+                                    Navigator.pushReplacement(context, route);
+                                  },
+                                  child: VideoCard(
+                                    videoId: curVideoId,
+                                    heroIndex: heroIndex,
+                                  ),
+                                ),
+                              ),
+                              const Divider(
+                                indent: 50,
+                                endIndent: 50,
+                              ),
+                            ]);
+                          },
+                          childCount: recommendedVideos.length,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
