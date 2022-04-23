@@ -125,9 +125,8 @@ class _LandingPageState extends State<LandingPage> {
                       ),
                       onTap: () async {
                         final TwitterLogin twitterLogin = TwitterLogin(
-                          apiKey: 'EkoX2ROTXOAOqpfhtNAx7zag8',
-                          apiSecretKey:
-                              'nxCWcBSjxg52lYaNZE1jVXhcd5ip3UStZImW79wrph6SxxOutu',
+                          apiKey: twitterKey,
+                          apiSecretKey: twitterKeySecret,
                           redirectURI: "blindtube://",
                         );
                         print(twitterLogin.apiSecretKey);
@@ -163,6 +162,10 @@ class _LandingPageState extends State<LandingPage> {
                       );
                       try {
                         await googleSignIn.signIn();
+                        print('signed in');
+                        Database.user.name = googleSignIn
+                            .currentUser!.displayName!
+                            .split(' ')[0];
                         var page = await HeroControl.buildPageAsync(HomePage(
                           heroIndex: heroIndex,
                         ));
@@ -170,7 +173,7 @@ class _LandingPageState extends State<LandingPage> {
                             MaterialPageRoute(builder: (context) => page);
                         Navigator.pushReplacement(context, route);
                       } catch (error) {
-                        print(error);
+                        print(error.toString());
                       }
                     },
                   ),
