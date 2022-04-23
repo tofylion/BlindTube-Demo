@@ -3,7 +3,9 @@ import 'package:blindtube/hero_control.dart';
 import 'package:blindtube/pages/home_page.dart';
 import 'package:blindtube/styles/constants.dart';
 import 'package:blindtube/styles/palette.dart';
+import 'package:blindtube/testing/database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:spring_button/spring_button.dart';
 import 'package:auth_buttons/auth_buttons.dart'
     show
@@ -77,22 +79,37 @@ class _LandingPageState extends State<LandingPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Tappable(
-                    child: FacebookAuthButton(
-                      darkMode: true,
-                      style: AuthButtonStyle(
-                        // iconColor: Color(0xFF1778f2),
-                        buttonType: AuthButtonType.icon,
-                        buttonColor: lighterCardColor,
+                      child: FacebookAuthButton(
+                        darkMode: true,
+                        style: AuthButtonStyle(
+                          // iconColor: Color(0xFF1778f2),
+                          buttonType: AuthButtonType.icon,
+                          buttonColor: lighterCardColor,
+                        ),
                       ),
-                    ),
-                    onTap: () async {
-                      var page = await HeroControl.buildPageAsync(HomePage(
-                        heroIndex: heroIndex,
-                      ));
-                      var route = MaterialPageRoute(builder: (context) => page);
-                      await Navigator.pushReplacement(context, route);
-                    },
-                  ),
+                      onTap: () async {
+                        final LoginResult result =
+                            await FacebookAuth.instance.login();
+                        if (result.status == LoginStatus.success) {
+                          // you are logged
+                          final AccessToken accessToken = result.accessToken!;
+                          final userData =
+                              await FacebookAuth.instance.getUserData();
+                          Database.user.name =
+                              (userData['name'] as String).split(' ')[0];
+
+                          var page = await HeroControl.buildPageAsync(HomePage(
+                            heroIndex: heroIndex,
+                          ));
+
+                          var route =
+                              MaterialPageRoute(builder: (context) => page);
+                          await Navigator.pushReplacement(context, route);
+                        } else {
+                          print(result.status);
+                          print(result.message);
+                        }
+                      }),
                   Tappable(
                     child: TwitterAuthButton(
                       darkMode: true,

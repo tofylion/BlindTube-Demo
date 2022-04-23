@@ -168,40 +168,21 @@ class _HomePageState extends State<HomePage> {
                                   int curVideo = watchedVideosList[realIndex];
                                   return Tappable(
                                     onTap: () async {
-                                      final LoginResult result =
-                                          await FacebookAuth.instance.login();
-                                      if (result.status ==
-                                          LoginStatus.success) {
-                                        // you are logged
-                                        final AccessToken accessToken =
-                                            result.accessToken!;
-                                        final userData = await FacebookAuth
-                                            .instance
-                                            .getUserData();
-                                        Database.user.name =
-                                            (userData['name'] as String)
-                                                .split(' ')[0];
-                                        var page =
-                                            await HeroControl.buildPageAsync(
-                                          VideoPage(
-                                            videoId: curVideo,
-                                            heroIndex: heroIndex,
-                                          ),
-                                        );
-                                        var route = MaterialPageRoute(
-                                            builder: (_) => page);
+                                      var page =
+                                          await HeroControl.buildPageAsync(
+                                        VideoPage(
+                                          videoId: curVideo,
+                                          heroIndex: heroIndex,
+                                        ),
+                                      );
+                                      var route = MaterialPageRoute(
+                                          builder: (_) => page);
 
-                                        Navigator.push(context, route)
-                                            .then((_) {
-                                          SchedulerBinding.instance
-                                              ?.addPostFrameCallback((_) {
-                                            setState(() {});
-                                          });
-                                        });
-                                      } else {
-                                        print(result.status);
-                                        print(result.message);
-                                      }
+                                      Navigator.push(context, route);
+                                      SchedulerBinding.instance
+                                          ?.addPostFrameCallback((_) {
+                                        setState(() {});
+                                      });
                                     },
                                     child: VideoCard(
                                       videoId: curVideo,
@@ -253,11 +234,10 @@ class _HomePageState extends State<HomePage> {
                                       var route = MaterialPageRoute(
                                           builder: (_) => page);
 
-                                      Navigator.push(context, route).then((_) {
-                                        SchedulerBinding.instance
-                                            ?.addPostFrameCallback((_) {
-                                          setState(() {});
-                                        });
+                                      Navigator.push(context, route);
+                                      SchedulerBinding.instance
+                                          ?.addPostFrameCallback((_) {
+                                        setState(() {});
                                       });
                                     },
                                     child: VideoCard(
