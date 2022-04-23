@@ -31,6 +31,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late int nonFinalHeroIndex;
+  List<int> heroIndices1 = [];
+  List<int> heroIndices2 = [];
+
   @override
   Widget build(BuildContext context) {
     if (widget.heroIndex != null) {
@@ -41,13 +44,15 @@ class _HomePageState extends State<HomePage> {
     List<int> watchedVideosList = Database.user.getWatchedVideosAsList();
     List<int> recommendedVideos =
         VideoRecommender.recommendOnUser(Server.videos, Database.user);
-    List<int> heroIndices1 = [];
-    for (var _ in watchedVideosList) {
-      heroIndices1.add(HeroControl.generateHeroIndex());
+    if (heroIndices1.length != watchedVideosList.length) {
+      for (var _ in watchedVideosList) {
+        heroIndices1.add(HeroControl.generateHeroIndex());
+      }
     }
-    List<int> heroIndices2 = [];
-    for (var _ in recommendedVideos) {
-      heroIndices2.add(HeroControl.generateHeroIndex());
+    if (heroIndices2.length != recommendedVideos.length) {
+      for (var _ in recommendedVideos) {
+        heroIndices2.add(HeroControl.generateHeroIndex());
+      }
     }
     return Scaffold(
       // backgroundColor: navBarColor,
